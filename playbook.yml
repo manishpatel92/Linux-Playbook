@@ -1,0 +1,53 @@
+---
+- name: setting up LAMP website
+  user: ec2-user
+  hosts: all
+  become: yes
+  tasks:
+    - name: latest version of all required packages install
+      yum:
+        name:
+          - firewalld
+          - httpd
+          - mariadb-server
+          - php
+          - php-mysql
+        state: latest
+
+    - name: firewalld enabled and running
+      service:
+        name: firewalld
+        enabled: true
+        state: started
+
+    - name: firewalld permits http service
+      firewalld:
+        service: http
+        permanent: true
+        state: enabled
+        immediate: yes
+    - name: copy mime.type file
+      copy:
+        src: /etc/mime.types
+        dest: /etc/httpd/conf/mime.types
+        remote_src: yes
+    - name: httpd enabled and running
+      service:
+        name: httpd
+        enabled: true
+        state: started
+    - name: mariadb enabled and running
+      service:
+        name: mariadb
+        enabled: true
+        state: started
+    - name: copy the php page from remote using get_url
+      get_url:
+        url: "https://www.middlewareinventory.com/index.php"
+        dest: /var/www/html/index.php
+        mode: 0644
+    - name: test the webpage/website we have setup
+      uri:
+        url: http://13.233.42.7/index.php
+        status_code: 200
+...
